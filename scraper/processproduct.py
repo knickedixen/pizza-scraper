@@ -45,9 +45,10 @@ def findproduct(menus, name):
 def main():
     productName = "vesuvio"
 
-    output_file_path = scraperconfig.get("ProductsOutputFile")
-    restaurantsDirPath = scraperconfig.get("RestaurantsDir")
-    
+    output_file_path = scraperconfig.get("productsoutputfile")
+    restaurantsDirPath = scraperconfig.get("restaurantsdir")
+    postcode_dir_path = scraperconfig.get("postcodedir")
+
     resautrantsDir = os.listdir(restaurantsDirPath)
     products = []
     for f in resautrantsDir:
@@ -57,12 +58,25 @@ def main():
                 restaurantData = json.load(restaurantFile)['data']
                 product = findproduct(restaurantData['menus'], productName)
                 if product:
+                    postcode = restaurantData['post_code'].replace(" ",'');
                     product["restaurant"] = restaurantData['name'] 
-                    product["postcode"] = restaurantData['post_code'].replace(" ",'') 
+                    product["postcode"] =  postcode
                     product["latitude"] = restaurantData['latitude']
                     product["longitude"] = restaurantData['longitude']
                     product["code"] = restaurantData['code']
                     product["city"] = restaurantData['city']['name']
+                    product["county_code"] = ""
+                    product["county"] = ""
+                    product["state_code"] = ""
+                    product["state"] = ""
+                    postcode_file_path = postcode_dir_path + "/" + postcode + ".json"
+                    if os.path.isfile(postcode_file_path):
+                        with open(postcode_file_path, 'r') as postcode_file:
+                            postcode_data = json.load(postcode_file)
+                            product["county_code"] = postcode_data['county_code']
+                            product["county"] = postcode_data['county']
+                            product["state_code"] = postcode_data['state_code']
+                            product["state"] = postcode_data['state']
                     products.append(product)
 
     with open(output_file_path, "w") as file:
